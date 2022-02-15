@@ -1,0 +1,62 @@
+---
+title: "Web Scraping Using R Programming"
+output: html_notebook
+---
+This is a IMDB Web Scraping Project in which we take data from the IMDB website on top 100 Action IMDB rated movies.
+
+(https://www.imdb.com/search/title/?title_type=feature&num_votes=25000,&genres=action&sort=user_rating,desc&start=01&ref_=adv_nxt)
+
+The following packages are required in order to extract data from the website.
+
+```{r}
+install.packages("rvest")
+install.packages("tidyverse")
+install.packages("openxlsx")
+install.packages("rio")
+install_formats()
+```
+
+Then we have call these packages through library function.
+
+```{r}
+library(rvest)
+library(tidyverse)
+library(openxlsx)
+library(rio)
+```
+
+Since we need only first 100 movies, and the website contains only 50 movies per page. I used for loop to get data from 2 pages.
+
+```{r}
+
+imdb_table=data.frame()
+
+for(page in seq(from = 1, to = 51, by= 50))
+  {
+  imdb_link=paste0("https://www.imdb.com/search/title/?title_type=feature&num_votes=25000,&genres=action&sort=user_rating,desc&start=",page,"&ref_=adv_nxt")
+  imdb_page=read_html(imdb_link)
+  
+  Name=imdb_page %>% html_nodes(".lister-item-header a") %>% html_text()
+  Year=imdb_page %>% html_nodes(".text-muted.unbold") %>% html_text()
+  Genre=imdb_page %>% html_nodes(".genre") %>% html_text()
+  Rating=imdb_page %>% html_nodes(".ratings-imdb-rating strong") %>% html_text()
+  Runtime=imdb_page %>% html_nodes(".runtime") %>% html_text()
+  Synopsis=imdb_page %>% html_nodes(".ratings-bar+ .text-muted") %>% html_text()
+  Director=imdb_page %>% html_nodes(".text-muted+ p a:nth-child(1)") %>% html_text()
+  imdb_table= rbind(imdb_table,data.frame(Name,Year,Genre,Rating,Runtime,Synopsis,Director)) 
+}
+```
+
+Lets view the table
+
+```{r}
+view(imdb_table)
+```
+
+To export the table into a .xlsx file 
+
+```{r}
+export(imdb_table, "IMDB_Movies.xlsx")
+```
+
+The resulting .xlsx file is also available in the folder.
